@@ -3,19 +3,9 @@
 #
 name: Semi Linear Check
 
-# https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/troubleshooting-workflows/enabling-debug-logging
-# To set ACTIONS_STEP_DEBUG to true in GitHub, follow these steps:
-#  * Go to your GitHub repository.
-#  * Click on "Settings" at the top of the repository page.
-#  * In the left sidebar, click on "Secrets and variables", then select "Actions".
-#  * Click on the "New repository secret" button.
-#  * In the "Name" field, enter "ACTIONS_STEP_DEBUG" (all uppercase).
-#  * In the "Value" field, enter "true" (lowercase).
-#  * Click "Add secret" to save.
-# Once you've added this secret, GitHub Actions will automatically enable
-# step debug logging for all future workflow runs in this repository. This
-# will provide more detailed logs for each step in your workflows, which
-# can be very helpful for debugging.
+# Note:
+#   To enable debugging, set "Enable debug logging" after clicking "Re-run all jobs" button
+#   Or set "ACTIONS_STEP_DEBUG" to true in "Secrets and variables" / "Actions"
 
 on:
   pull_request:
@@ -56,7 +46,6 @@ jobs:
           PULL_COMMITS: ${{ github.event.pull_request.commits }}
         shell: bash
         run: |
-          echo "::debug::This is a debug line set with ACTIONS_STEP_DEBUG"
           echo pull_request event
           echo "PULL_COMMITS: $PULL_COMMITS"
 
