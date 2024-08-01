@@ -36,12 +36,12 @@ jobs:
         run: |
           echo "GITHUB_CONTEXT: $GITHUB_CONTEXT"
 
-      - name: Dump Vars context
+      - name: Dump Env context
         if: ${{ env.DEBUG == 'true' }}
         env:
-          VARS: ${{ toJSON(vars) }}
+          ENV: ${{ toJSON(env) }}
         run: |
-          echo "VARS: $VARS"
+          echo "ENV: $ENV"
 
       - name: Dump Runner context
         if: ${{ env.DEBUG == 'true' }}
