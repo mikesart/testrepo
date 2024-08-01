@@ -3,6 +3,10 @@
 #
 name: Semi Linear Check
 
+# TODO mikesart:
+# main.yaml. Update to this:
+# https://github.com/JensDll/should-run/blob/main/.github/workflows/main.yaml#L54
+
 # TODO
 # Our sync appears to not get the latest. Stuck a sleep 5 down below (for now),
 #   but may want to investigate one of these to be more robust?
@@ -59,7 +63,28 @@ jobs:
         shell: bash
         run: |
           sleep 5
-          git fetch --prune --unshallow
+          git fetch --prune --unshallow --no-tags --no-recurse-submodules
+
+      - name: foobar push
+        if: github.event_name == 'push'
+        env:
+          PUSHED_COMMITS: ${{ toJSON(github.event.commits) }}
+        shell: bash
+        run: |
+          echo push event
+          echo "github.event.after = ${{ github.event.after}}"
+          # if [[ ${{ github.event.before }} == 0000000000000000000000000000000000000000 ]]; then
+          echo "github.event.before = ${{ github.event.before }}"
+          echo "PUSHED_COMMITS: $PUSHED_COMMITS"
+
+      - name: foobar pull_request
+        if: github.event_name == 'pull_request'
+        env:
+          PULL_COMMITS: ${{ github.event.pull_request.commits }}
+        shell: bash
+        run: |
+          echo pull_request event
+          echo "PULL_COMMITS: $PULL_COMMITS"
 
       - name: Extract branch name and commit hash
         shell: bash
@@ -74,7 +99,14 @@ jobs:
           if [ "${{ github.event_name }}" == "pull_request" ] ; then
             echo "github.event.pull_request.head.ref: ${{ github.event.pull_request.head.ref }}"
             echo "github.event.pull_request.head.sha: ${{ github.event.pull_request.head.sha }}"
+            # github.event.pull_request.base.ref == target branch name
             echo "github.event.pull_request.base.ref: ${{ github.event.pull_request.base.ref }}"
+            # https://github.com/orgs/community/discussions/59677
+            # https://github.com/orgs/community/discussions/39880
+            # The value of ${{ github.event.pull_request.base.sha }} is
+            # not updated on every commit to the PR. It is the SHA of the
+            # base branch at the time the PR was created, which becomes
+            # out of date as the PR gets updated.
             echo "github.event.pull_request.base.sha: ${{ github.event.pull_request.base.sha }}"
           fi
           echo "common_commit=$(git merge-base origin/staging origin/${{ github.head_ref || github.ref_name }})" >> "$GITHUB_OUTPUT"
@@ -85,7 +117,6 @@ jobs:
         shell: bash
         run: |
           echo "Comparing common_commit ${{ steps.vars.outputs.common_commit }} to staging_head ${{ steps.vars.outputs.staging_head }}"
-          # test "${{ steps.vars.outputs.common_commit }}" = "${{ steps.vars.outputs.staging_head }}"
           if [ "${{ steps.vars.outputs.common_commit }}" != "${{ steps.vars.outputs.staging_head }}" ]; then
             echo "Error: Your branch is not up-to-date with the staging branch."
             echo "The common ancestor (${{ steps.vars.outputs.common_commit }}) does not match the HEAD of staging (${{ steps.vars.outputs.staging_head }})."
