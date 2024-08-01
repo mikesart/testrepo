@@ -23,10 +23,6 @@ name: Semi Linear Check
 on:
   pull_request:
 
-env:
-  # Setting an environment variable with the value of a configuration variable
-  env_var: ${{ vars.ENV_CONTEXT_VAR }}
-
 jobs:
   check:
     name: semi linear check
@@ -41,10 +37,14 @@ jobs:
         # if: ${{ runner.debug == '1' }}
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
+          VARS: ${{ toJSON(vars) }}
+          RUNNER: ${{ toJSON(runner) }}
         run: |
-          echo "GITHUB_CONTEXT:"
-          echo "$GITHUB_CONTEXT" | grep pull_request
-          echo "variable from shell environment : $env_var"
+          echo "GITHUB_CONTEXT: $GITHUB_CONTEXT"
+          echo ""
+          echo "VARS: $VARS"
+          echo ""
+          echo "RUNNER: $RUNNER"
 
       - name: Pull Request Commits
         if: github.event_name == 'pull_request'
