@@ -29,21 +29,21 @@ jobs:
       # Check-out repo under $GITHUB_WORKSPACE
       - uses: actions/checkout@v4
 
-      - name: Dump GitHub context
+      - name: Dump GitHub context (Debug)
         if: ${{ env.DEBUG == 'true' }}
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
         run: |
           echo "GITHUB_CONTEXT: $GITHUB_CONTEXT"
 
-      - name: Dump Env context
+      - name: Dump Vars context (Debug)
         if: ${{ env.DEBUG == 'true' }}
         env:
-          ENV: ${{ toJSON(env) }}
+          VARS: ${{ toJSON(vars) }}
         run: |
-          echo "ENV: $ENV"
+          echo "VARS: $VARS"
 
-      - name: Dump Runner context
+      - name: Dump Runner context (Debug)
         if: ${{ env.DEBUG == 'true' }}
         env:
           RUNNER: ${{ toJSON(runner) }}
