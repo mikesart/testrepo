@@ -24,9 +24,6 @@ name: Semi Linear Check
 
 # https://github.com/WyriHaximus/github-action-wait-for-status/blob/master/.github/workflows/ci.yml
 on:
-  push:
-    branches:
-      - staging
   pull_request:
 
 # example using script
