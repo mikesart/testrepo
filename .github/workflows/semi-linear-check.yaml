@@ -3,29 +3,12 @@
 #
 name: Semi Linear Check
 
-# ACTIONS_RUNNER_DEBUG
-#
-# https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/troubleshooting-workflows/enabling-debug-logging
-# To set ACTIONS_STEP_DEBUG to true in GitHub, follow these steps:
-#  * Go to your GitHub repository.
-#  * Click on "Settings" at the top of the repository page.
-#  * In the left sidebar, click on "Secrets and variables", then select "Actions".
-#  * Click on the "New repository secret" button.
-#  * In the "Name" field, enter "ACTIONS_STEP_DEBUG" (all uppercase).
-#  * In the "Value" field, enter "true" (lowercase).
-#  * Click "Add secret" to save.
-# 
-# Once you've added this secret, GitHub Actions will automatically enable
-# step debug logging for all future workflow runs in this repository. This
-# will provide more detailed logs for each step in your workflows, which
-# can be very helpful for debugging.
+# Note:
+#   To enable debugging, set "Enable debug logging" after clicking "Re-run all jobs" button
+#   Or set "ACTIONS_STEP_DEBUG" to true in "Secrets and variables" / "Actions"
 
 on:
   pull_request:
-
-env:
-  # Setting an environment variable with the value of a configuration variable
-  env_var: ${{ vars.ENV_CONTEXT_VAR }}
 
 jobs:
   check:
@@ -36,15 +19,26 @@ jobs:
       # Check-out repo under $GITHUB_WORKSPACE
       - uses: actions/checkout@v4
 
-      - name: Dump GitHub context (for debugging)
+      - name: Dump GitHub context (Debug)
         if: ${{ env.DEBUG == 'true' }}
-        # if: ${{ runner.debug == '1' }}
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
         run: |
-          echo "GITHUB_CONTEXT:"
-          echo "$GITHUB_CONTEXT" | grep pull_request
-          echo "variable from shell environment : $env_var"
+          echo "GITHUB_CONTEXT: $GITHUB_CONTEXT"
+
+      - name: Dump Vars context (Debug)
+        if: ${{ env.DEBUG == 'true' }}
+        env:
+          VARS: ${{ toJSON(vars) }}
+        run: |
+          echo "VARS: $VARS"
+
+      - name: Dump Runner context (Debug)
+        if: ${{ env.DEBUG == 'true' }}
+        env:
+          RUNNER: ${{ toJSON(runner) }}
+        run: |
+          echo "RUNNER: $RUNNER"
 
       - name: Pull Request Commits
         if: github.event_name == 'pull_request'
@@ -52,7 +46,6 @@ jobs:
           PULL_COMMITS: ${{ github.event.pull_request.commits }}
         shell: bash
         run: |
-          echo "::debug::This is a debug line set with ACTIONS_STEP_DEBUG"
           echo pull_request event
           echo "PULL_COMMITS: $PULL_COMMITS"
 
