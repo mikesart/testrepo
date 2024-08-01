@@ -1,0 +1,73 @@
+#
+# Compare HEAD of staging branch with the merge-base of staging
+#
+name: Semi Linear Check
+
+# TODO
+# Our sync appears to not get the latest. Stuck a sleep 5 down below (for now),
+#   but may want to investigate one of these to be more robust?
+# https://cardinalby.github.io/blog/post/github-actions/implementing-deferred-steps/
+
+# Triggers the workflow on push or pull request events but only for the staging branch
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - staging
+
+
+# https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/contexts#github-context
+# Note: github.ref values depend upon request type
+#   We use head_ref if set, otherwise ref_name
+# pull request:
+#   Ref name: 1/merge
+#   Ref: refs/pull/1/merge
+#   Head ref: branch2
+# push event:
+#   Ref name: branch2
+#   Ref: refs/heads/branch2
+#   Head ref:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check-out repo under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v4
+
+      - name: Fetch github repo
+        shell: bash
+        run: |
+          sleep 5
+          git fetch --prune --unshallow
+
+      - name: Extract branch name and commit hash
+        shell: bash
+        run: |
+          echo "Job was automatically triggered by ${{ github.event_name }} event."
+          echo "Name of your branch: ${{ github.ref }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "github.ref_name: ${{ github.ref_name }}"
+          echo "github.ref: ${{ github.ref }}"
+          echo "github.head_ref: ${{ github.head_ref }}"
+          echo "common_commit=$(git merge-base origin/staging origin/${{ github.head_ref || github.ref_name }})" >> "$GITHUB_OUTPUT"
+          echo "staging_head=$(git rev-parse origin/staging)" >> "$GITHUB_OUTPUT"
+        id: vars
+
+      - name: Fail if current branch requires a rebase
+        shell: bash
+        run: |
+          echo "Comparing common_commit ${{ steps.vars.outputs.common_commit }} to staging_head ${{ steps.vars.outputs.staging_head }}"
+          # test "${{ steps.vars.outputs.common_commit }}" = "${{ steps.vars.outputs.staging_head }}"
+          if [ "${{ steps.vars.outputs.common_commit }}" != "${{ steps.vars.outputs.staging_head }}" ]; then
+            echo "Error: Your branch is not up-to-date with the staging branch."
+            echo "The common ancestor (${{ steps.vars.outputs.common_commit }}) does not match the HEAD of staging (${{ steps.vars.outputs.staging_head }})."
+            echo "Please rebase your branch on the latest staging before merging."
+            exit 1
+          else
+            echo "Branch is up-to-date with staging. Good to go!"
+          fi
+
