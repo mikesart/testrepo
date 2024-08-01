@@ -1,5 +1,5 @@
 #
-# Compare HEAD of staging branch with the merge-base of staging
+# Compare HEAD of target branch with the merge-base of target
 #
 name: Semi Linear Check
 
@@ -52,9 +52,10 @@ jobs:
       - name: Extract branch name and commit hash
         env:
           BRANCH_NAME: ${{ github.head_ref }}
+          BRANCH_TARGET: ${{ github.base_ref }}
         shell: bash
         run: |
-          git fetch --prune --no-tags --no-recurse-submodules origin staging
+          git fetch --prune --no-tags --no-recurse-submodules origin ${BRANCH_TARGET}
           git fetch --prune --no-tags --no-recurse-submodules origin ${BRANCH_NAME}
           git branch -v
 
@@ -64,20 +65,24 @@ jobs:
           echo "github.ref_name: ${{ github.ref_name }}"
           echo "github.head_ref: ${{ github.head_ref }}"
 
-          echo "common_commit=$(git merge-base origin/staging origin/${BRANCH_NAME})" >> "$GITHUB_OUTPUT"
-          echo "staging_head=$(git rev-parse origin/staging)" >> "$GITHUB_OUTPUT"
+          echo "common_commit=$(git merge-base origin/${BRANCH_TARGET} origin/${BRANCH_NAME})" >> "$GITHUB_OUTPUT"
+          echo "target_head=$(git rev-parse origin/${BRANCH_TARGET})" >> "$GITHUB_OUTPUT"
         id: vars
 
       - name: Fail if current branch requires a rebase
+        env:
+          BRANCH_TARGET: ${{ github.base_ref }}
+          TARGET_HEAD: ${{ steps.vars.outputs.target_head }}
+          COMMON_COMMIT: ${{ steps.vars.outputs.common_commit }}
         shell: bash
         run: |
-          echo "Comparing common_commit ${{ steps.vars.outputs.common_commit }} to staging_head ${{ steps.vars.outputs.staging_head }}"
-          if [ "${{ steps.vars.outputs.common_commit }}" != "${{ steps.vars.outputs.staging_head }}" ]; then
-            echo "Error: Your branch is not up-to-date with the staging branch."
-            echo "The common ancestor (${{ steps.vars.outputs.common_commit }}) does not match the HEAD of staging (${{ steps.vars.outputs.staging_head }})."
-            echo "Please rebase your branch on the latest staging before merging."
+          echo "Comparing common_commit $COMMON_COMMIT to target_head $TARGET_HEAD"
+          if [ "$COMMON_COMMIT" != "$TARGET_HEAD" ]; then
+            echo "Error: Your branch is not up-to-date with the $BRANCH_TARGET branch."
+            echo "The common ancestor ($COMMON_COMMIT) does not match the HEAD of $BRANCH_TARGET ($TARGET_HEAD)."
+            echo "Please rebase your branch on the latest $BRANCH_TARGET before merging."
             exit 1
           else
-            echo "Branch is up-to-date with staging. Good to go!"
+            echo "Branch is up-to-date with $BRANCH_TARGET. Good to go!"
           fi
 
