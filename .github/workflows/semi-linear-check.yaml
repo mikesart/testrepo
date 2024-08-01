@@ -3,6 +3,8 @@
 #
 name: Semi Linear Check
 
+# ACTIONS_RUNNER_DEBUG
+#
 # https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/troubleshooting-workflows/enabling-debug-logging
 # To set ACTIONS_STEP_DEBUG to true in GitHub, follow these steps:
 #  * Go to your GitHub repository.
@@ -36,6 +38,7 @@ jobs:
 
       - name: Dump GitHub context (for debugging)
         if: ${{ env.DEBUG == 'true' }}
+        # if: ${{ runner.debug == '1' }}
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
         run: |
@@ -49,6 +52,7 @@ jobs:
           PULL_COMMITS: ${{ github.event.pull_request.commits }}
         shell: bash
         run: |
+          echo "::debug::This is a debug line set with ACTIONS_STEP_DEBUG"
           echo pull_request event
           echo "PULL_COMMITS: $PULL_COMMITS"
 
