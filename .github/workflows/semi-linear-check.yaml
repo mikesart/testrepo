@@ -47,6 +47,7 @@ on:
 
 jobs:
   check:
+    name: semi linear check
     runs-on: ubuntu-latest
 
     steps:
