@@ -63,7 +63,7 @@ jobs:
         shell: bash
         run: |
           sleep 5
-          git fetch --prune --unshallow --no-tags --no-recurse-submodules
+          git branch -v
 
       - name: foobar push
         if: github.event_name == 'push'
@@ -87,8 +87,14 @@ jobs:
           echo "PULL_COMMITS: $PULL_COMMITS"
 
       - name: Extract branch name and commit hash
+        env:
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
         shell: bash
         run: |
+          git fetch --prune --unshallow --no-tags --no-recurse-submodules origin staging
+          git fetch --prune --unshallow --no-tags --no-recurse-submodules origin ${BRANCH_NAME}
+          git branch -v
+
           echo "Job was automatically triggered by ${{ github.event_name }} event."
           echo "Name of your branch: ${{ github.ref }}"
           echo "Repository: ${{ github.repository }}"
@@ -109,7 +115,7 @@ jobs:
             # out of date as the PR gets updated.
             echo "github.event.pull_request.base.sha: ${{ github.event.pull_request.base.sha }}"
           fi
-          echo "common_commit=$(git merge-base origin/staging origin/${{ github.head_ref || github.ref_name }})" >> "$GITHUB_OUTPUT"
+          echo "common_commit=$(git merge-base origin/staging origin/${BRANCH_NAME})" >> "$GITHUB_OUTPUT"
           echo "staging_head=$(git rev-parse origin/staging)" >> "$GITHUB_OUTPUT"
         id: vars
 
