@@ -10,25 +10,24 @@ name: Semi Linear Check
 
 # Triggers the workflow on push or pull request events but only for the staging branch
 # https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#pull_request
-on:
-  push:
-    branches:
-      - '*'
-  pull_request:
-    branches:
-      - staging
-
-# https://github.com/WyriHaximus/github-action-wait-for-status/blob/master/.github/workflows/ci.yml
 # on:
 #   push:
 #     branches:
-#       - master
+#       - '*'
 #   pull_request:
+#     branches:
+#       - staging
+
+# https://github.com/WyriHaximus/github-action-wait-for-status/blob/master/.github/workflows/ci.yml
+on:
+  push:
+    branches:
+      - staging
+  pull_request:
 
 # example using script
 # https://github.com/DataDog/dd-trace-java/blob/master/.github/workflows/add-milestone-to-pull-requests.yaml
 # with core.setFailed(`Failed to list milestones: ${response.status}`)
-
 
 # https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/contexts#github-context
 # Note: github.ref values depend upon request type
