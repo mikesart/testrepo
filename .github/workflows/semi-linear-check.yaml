@@ -63,7 +63,7 @@ jobs:
       - name: Fetch github repo
         shell: bash
         run: |
-          sleep 5
+          # sleep 5
           git branch -v
 
       - name: foobar push
