@@ -3,44 +3,27 @@
 #
 name: Semi Linear Check
 
-# TODO mikesart:
-# main.yaml. Update to this:
-# https://github.com/JensDll/should-run/blob/main/.github/workflows/main.yaml#L54
+# https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/troubleshooting-workflows/enabling-debug-logging
+# To set ACTIONS_STEP_DEBUG to true in GitHub, follow these steps:
+#  * Go to your GitHub repository.
+#  * Click on "Settings" at the top of the repository page.
+#  * In the left sidebar, click on "Secrets and variables", then select "Actions".
+#  * Click on the "New repository secret" button.
+#  * In the "Name" field, enter "ACTIONS_STEP_DEBUG" (all uppercase).
+#  * In the "Value" field, enter "true" (lowercase).
+#  * Click "Add secret" to save.
+# 
+# Once you've added this secret, GitHub Actions will automatically enable
+# step debug logging for all future workflow runs in this repository. This
+# will provide more detailed logs for each step in your workflows, which
+# can be very helpful for debugging.
 
-# TODO
-# Our sync appears to not get the latest. Stuck a sleep 5 down below (for now),
-#   but may want to investigate one of these to be more robust?
-# https://cardinalby.github.io/blog/post/github-actions/implementing-deferred-steps/
-
-# Triggers the workflow on push or pull request events but only for the staging branch
-# https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#pull_request
-# on:
-#   push:
-#     branches:
-#       - '*'
-#   pull_request:
-#     branches:
-#       - staging
-
-# https://github.com/WyriHaximus/github-action-wait-for-status/blob/master/.github/workflows/ci.yml
 on:
   pull_request:
 
-# example using script
-# https://github.com/DataDog/dd-trace-java/blob/master/.github/workflows/add-milestone-to-pull-requests.yaml
-# with core.setFailed(`Failed to list milestones: ${response.status}`)
-
-# https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/contexts#github-context
-# Note: github.ref values depend upon request type
-#   We use head_ref if set, otherwise ref_name
-# pull request:
-#   Ref name: 1/merge
-#   Ref: refs/pull/1/merge
-#   Head ref: branch2
-# push event:
-#   Ref name: branch2
-#   Ref: refs/heads/branch2
-#   Head ref:
+env:
+  # Setting an environment variable with the value of a configuration variable
+  env_var: ${{ vars.ENV_CONTEXT_VAR }}
 
 jobs:
   check:
@@ -48,34 +31,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Check-out repo under $GITHUB_WORKSPACE, so your job can access it
+      # Check-out repo under $GITHUB_WORKSPACE
       - uses: actions/checkout@v4
 
       - name: Dump GitHub context (for debugging)
+        if: ${{ env.DEBUG == 'true' }}
         env:
           GITHUB_CONTEXT: ${{ toJSON(github) }}
         run: |
-          echo "GITHUB_CONTEXT: $GITHUB_CONTEXT"
+          echo "GITHUB_CONTEXT:"
+          echo "$GITHUB_CONTEXT" | grep pull_request
+          echo "variable from shell environment : $env_var"
 
-      - name: Fetch github repo
-        shell: bash
-        run: |
-          # sleep 5
-          git branch -v
-
-      - name: foobar push
-        if: github.event_name == 'push'
-        env:
-          PUSHED_COMMITS: ${{ toJSON(github.event.commits) }}
-        shell: bash
-        run: |
-          echo push event
-          echo "github.event.after = ${{ github.event.after}}"
-          # if [[ ${{ github.event.before }} == 0000000000000000000000000000000000000000 ]]; then
-          echo "github.event.before = ${{ github.event.before }}"
-          echo "PUSHED_COMMITS: $PUSHED_COMMITS"
-
-      - name: foobar pull_request
+      - name: Pull Request Commits
         if: github.event_name == 'pull_request'
         env:
           PULL_COMMITS: ${{ github.event.pull_request.commits }}
@@ -86,33 +54,19 @@ jobs:
 
       - name: Extract branch name and commit hash
         env:
-          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+          BRANCH_NAME: ${{ github.head_ref }}
         shell: bash
         run: |
           git fetch --prune --no-tags --no-recurse-submodules origin staging
           git fetch --prune --no-tags --no-recurse-submodules origin ${BRANCH_NAME}
           git branch -v
 
-          echo "Job was automatically triggered by ${{ github.event_name }} event."
-          echo "Name of your branch: ${{ github.ref }}"
+          echo "Job triggered by ${{ github.event_name }} event."
+          echo "Name of branch: ${{ github.ref }}"
           echo "Repository: ${{ github.repository }}"
           echo "github.ref_name: ${{ github.ref_name }}"
-          echo "github.ref: ${{ github.ref }}"
           echo "github.head_ref: ${{ github.head_ref }}"
-          echo "GITHUB_SHA: ${GITHUB_SHA}"
-          if [ "${{ github.event_name }}" == "pull_request" ] ; then
-            echo "github.event.pull_request.head.ref: ${{ github.event.pull_request.head.ref }}"
-            echo "github.event.pull_request.head.sha: ${{ github.event.pull_request.head.sha }}"
-            # github.event.pull_request.base.ref == target branch name
-            echo "github.event.pull_request.base.ref: ${{ github.event.pull_request.base.ref }}"
-            # https://github.com/orgs/community/discussions/59677
-            # https://github.com/orgs/community/discussions/39880
-            # The value of ${{ github.event.pull_request.base.sha }} is
-            # not updated on every commit to the PR. It is the SHA of the
-            # base branch at the time the PR was created, which becomes
-            # out of date as the PR gets updated.
-            echo "github.event.pull_request.base.sha: ${{ github.event.pull_request.base.sha }}"
-          fi
+
           echo "common_commit=$(git merge-base origin/staging origin/${BRANCH_NAME})" >> "$GITHUB_OUTPUT"
           echo "staging_head=$(git rev-parse origin/staging)" >> "$GITHUB_OUTPUT"
         id: vars
