@@ -9,6 +9,7 @@ name: Semi Linear Check
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
   check:
@@ -50,6 +51,7 @@ jobs:
           echo "PULL_COMMITS: $PULL_COMMITS"
 
       - name: Extract branch name and commit hash
+        if: github.event.pull_request.draft == false
         env:
           BRANCH_NAME: ${{ github.head_ref }}
           BRANCH_TARGET: ${{ github.base_ref }}
@@ -70,6 +72,7 @@ jobs:
         id: vars
 
       - name: Fail if current branch requires a rebase
+        if: github.event.pull_request.draft == false
         env:
           BRANCH_TARGET: ${{ github.base_ref }}
           TARGET_HEAD: ${{ steps.vars.outputs.target_head }}
